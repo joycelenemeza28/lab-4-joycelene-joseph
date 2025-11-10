@@ -8,15 +8,10 @@ from bst import *
 
 @dataclass
 class Point2:
-    """A simple class for X/Y coordinates. """
     x: float
     y: float
 
 def dist_comes_before(p1: Point2, p2: Point2) -> bool:
-    """
-    Returns True if p1 is closer to the origin (0,0) than p2.
-    Compares squared Euclidean distances to avoid importing 'math'. 
-    """
     dist_sq_1 = p1.x**2 + p1.y**2
     dist_sq_2 = p2.x**2 + p2.y**2
     return dist_sq_1 < dist_sq_2
