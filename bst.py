@@ -4,103 +4,109 @@ from typing import *
 from dataclasses import dataclass 
 sys.setrecursionlimit(10**6) 
 
-BinTree = Optional['Node']
+ComesBefore= Callable[[Any,Any],bool]
 
 @dataclass(frozen=True)
 class Node:
-    value: Any
-    left: BinTree
-    right: BinTree
+    value: Any 
+    left: 'BinTree'
+    right: 'BinTree'
+
+BinTree: TypeAlias= Optional[Node]
 
 @dataclass(frozen=True)
-class BinarySearchTree:
-    comes_before: Callable[[Any, Any], bool]
+class BST:
+    comes_before: ComesBefore
     root: BinTree
 
-def is_empty(bst: BinarySearchTree) -> bool:
-    #Takes a BST and returns True if tree is empty, otherwise false
+#returns true if tree is empty and false otherwise
+def is_empty(bst: BST)-> bool:
     return bst.root is None
 
-def insert(bst: BinarySearchTree, value: Any) -> BinarySearchTree:
-    #Inserts a value into the BST and returns a new BST
-    new_root = _insert_helper(bst.comes_before, bst.root, value)
-    return BinarySearchTree(bst.comes_before, new_root)
-
-def _insert_helper(comes_before: Callable[[Any, Any], bool], node: BinTree, value: Any) -> Node:
-    #Recursive helper for insert, returns a new subtree as a node with the inserted value
-    if node is None:
+#helper function for insert
+def insert_helper(tree: BinTree, value: Any, comes_before: ComesBefore)-> BinTree:
+    if tree is None:
         return Node(value, None, None)
-    
-    if comes_before(value, node.value):
-        new_left = _insert_helper(comes_before, node.left, value)
-        return Node(node.value, new_left, node.right)
-    
+    if comes_before(value, tree.value):
+        new_left= insert_helper(tree.left, value, comes_before)
+        return Node(tree.value,new_left, tree.right)
     else:
-        new_right = _insert_helper(comes_before, node.right, value)
-        return Node(node.value, node.left, new_right)
+        new_right= insert_helper(tree.right, value, comes_before)
+        return Node(tree.value,tree.left, new_right)
     
-def lookup(bst: BinarySearchTree, value: Any) -> bool:
-    #Returns True if the value is in the tree, False otherwise
-    return _lookup_helper(bst.comes_before, bst.root, value)
+#adds the value to tree 
+def insert(bst: BST,value: Any)-> BST:
+    new_root= insert_helper(bst.root, value, bst.comes_before)
+    return BST(bst.comes_before, new_root)
 
-def _lookup_helper(comes_before: Callable[[Any, Any], bool], node: BinTree, value: Any) -> bool:
-    #Recursive helper for lookup
-    if node is None:
+#determines if two values are considered equal based on the comes_before function
+def is_equal(val_1: Any, val_2: Any, comes_before: ComesBefore)-> bool:
+    return(not comes_before(val_1, val_2) and (not comes_before(val_2, val_1)))
+
+#helper function for lookup
+def lookup_helper(tree: BinTree, value: Any, comes_before: ComesBefore)-> bool:
+    if tree is None:
         return False
-    if not comes_before(value, node.value) and not comes_before(node.value, value):
-        return True
-    
-    if comes_before(value, node.value):
-        return _lookup_helper(comes_before, node.left, value)
-    
-    else: 
-        return _lookup_helper(comes_before, node.right, value)
-    
-def delete(bst: BinarySearchTree, value: Any) -> BinarySearchTree:
-    #Removes one instance of the value from the tree, returning a new BST
-    new_root = _delete_helper(bst.comes_before, bst.root, value)
-    return BinarySearchTree(bst.comes_before, new_root)
-
-def _find_min(node: Node) -> Any:
-    #Helper to find the minimum value in a non-empty subtree
-    current = node
-    while current.left is not None:
-        current = current.left
-    return current.value
-
-def _delete_helper(comes_before: Callable[[Any, Any], bool], node: BinTree, value: Any) -> BinTree:
-    #Recursive helper for delete, returns the new modified subtree
-    if node is None:
-        return None
-    
-    if comes_before(value, node.value):
-        new_left = _delete_helper(comes_before, node.left, value)
-        return Node(node.value, new_left, node.right)
-    
-    elif comes_before(node.value, value):
-        new_right = _delete_helper(comes_before, node.right, value)
-        return Node(node.value, node.left, new_right)
-    
+    if is_equal(value, tree.value,comes_before):
+       return True
+    if comes_before(value, tree.value):
+        return lookup_helper(tree.left, value, comes_before)
     else:
-        if node.left is None and node.right is None:
-            return None
-        elif node.left is None:
-            return node.right
-        elif node.right is None:
-            return node.left
-        else:
-            successor_val = _find_min(node.right)
-            new_right_subtree = _delete_helper(comes_before, node.right, successor_val)
-            return Node(successor_val, node.left, new_right_subtree)
-        
+        return lookup_helper(tree.right, value, comes_before)
 
-def height(bst: BinarySearchTree) -> int:
-    #Calculates the height of the tree
-    return _height_helper(bst.root)
+#returns true if the value is found, false otherwise 
+def lookup(bst: BST, value: Any)-> bool:
+    return lookup_helper(bst.root, value, bst.comes_before)
+ 
+#finds the node with the minimum value in a non-empty BinTree
+def find_min_node(tree: BinTree)-> Node:
+    if tree is None:
+        raise ValueError("Cannot find min on an empty tree/subtree")
+    if tree.left is None:
+        return tree
+    return find_min_node(tree.left)
 
-def _height_helper(node: BinTree) -> int:
-    #Recursive helper for height
+#deletes minimum value node from a non-empty BinTree and returns resulting tree
+def delete_min_node(tree: BinTree)-> BinTree:
+    if tree is None:
+        raise ValueError("Cannot find min on an empty tree/subtree")
+    if tree.left is None:
+        return tree.right 
+    new_left= delete_min_node(tree.left)
+    return Node(tree.value, new_left, tree.right)
+
+#helper function for delete
+def delete_helper(tree: BinTree, value: Any, comes_before: ComesBefore)-> BinTree:
+    if tree is None:
+        return None
+    if is_equal(value, tree.value, comes_before):
+        if tree.left is None:
+            return tree.right
+        if tree.right is None:
+            return tree.left
+        successor_node = find_min_node(tree.right)
+        successor_value = successor_node.value
+
+        new_right = delete_min_node(tree.right)
+        return Node(successor_value, tree.left, new_right)
+    if comes_before(value, tree.value):
+        new_left= delete_helper(tree.left, value, comes_before)
+        return Node(tree.value, new_left, tree.right)
+    else:
+        new_right = delete_helper(tree.right, value, comes_before)
+        return Node(tree.value, tree.left, new_right)
+    
+#returns a new BST instance 
+def delete(bst:BST, value: Any)->BST:
+    new_root = delete_helper(bst.root, value, bst.comes_before)
+    return BST(comes_before= bst.comes_before, root=new_root)
+
+#helper function for height 
+def height_helper(node: BinTree) -> int:
     if node is None:
         return -1
-    
-    return 1 + max(_height_helper(node.left), _height_helper(node.right))
+    return 1 + max(height_helper(node.left), height_helper(node.right))
+
+#Calculates the height of the tree
+def height(bst: BST) -> int:
+    return height_helper(bst.root)

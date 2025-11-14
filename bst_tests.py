@@ -20,13 +20,13 @@ class BSTTests(unittest.TestCase):
     
     def setUp(self):
         self.cb_int = lambda a, b: a < b
-        self.bst_int = BinarySearchTree(self.cb_int, None)
+        self.bst_int = BST(self.cb_int, None)
         
         self.cb_str = lambda a, b: a < b
-        self.bst_str = BinarySearchTree(self.cb_str, None)
+        self.bst_str = BST(self.cb_str, None)
          
         self.cb_point = dist_comes_before
-        self.bst_point = BinarySearchTree(self.cb_point, None)
+        self.bst_point = BST(self.cb_point, None)
 
     def test_is_empty(self):
         self.assertTrue(is_empty(self.bst_int))

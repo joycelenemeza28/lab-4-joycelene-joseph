@@ -13,9 +13,9 @@ from bst import *
  
 TREES_PER_RUN : int = 10000 
 
-def random_tree(n: int) -> BinarySearchTree:
-    comes_before = lambda a, b: a < b
-    bst = BinarySearchTree(comes_before, None)
+def random_tree(n: int) -> BST:
+    ComesBefore = lambda a, b: a < b
+    bst = BST(ComesBefore, None)
     
     for _ in range(n):
         bst = insert(bst, random.random())
